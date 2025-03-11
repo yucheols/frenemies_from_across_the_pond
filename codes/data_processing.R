@@ -7,10 +7,14 @@ gc()
 
 # load packages
 library(megaSDM)
+library(spThin)
 library(raster) 
 library(terra)
 library(plyr)
 library(dplyr)
+
+# set a random seed for reproducibility
+set.seed(123)
 
 ##### part 1 ::: collect and process occurrence points -----
 # first collect the occurrence points from across the sp ranges 
@@ -26,6 +30,7 @@ nrow(r.occs)
 colnames(r.occs) = c('sp', 'long', 'lat', 'continent', 'year')
 head(r.occs)
 
+
 # load occurrence points for oratoria == only take human observations, and then select only the columns that are needed
 o.occs <- read.csv('data/occs/raw/Iris_oratoria.csv')
 o.occs <- o.occs %>% filter(basisOfRecord == 'HUMAN_OBSERVATION') %>% select('species', 'decimalLongitude', 'decimalLatitude', 'continent', 'year')
@@ -34,7 +39,7 @@ nrow(o.occs)
 colnames(o.occs) = colnames(r.occs)
 head(o.occs)
 
-############  THIS IS A TEST
+############  THIS IS A TEST....the actual setting of the calibration & projection ranges should be modified for the final modeling
 
 ##### part 2 ::: process environmental data -----
 
@@ -42,6 +47,7 @@ head(o.occs)
 envs <- rast(list.files('E:/env layers/CHELSA_cur_V1_2B_r2_5m/2_5min/', pattern = '.tif$', full.names = T))
 names(envs) = gsub('_', '', names(envs))
 print(envs)
+
 
 ### calibration (native) range for M. religiosa
 # plot out the occurrence points on the map first
@@ -55,15 +61,57 @@ nrow(r.occs_eu)
 
 points(r.occs_eu[, c('long', 'lat')], col = 'red')
 
+# check temporal coverage == do this prior to thinning because thinning will remove all columns other than the occurrences
+unique(r.occs_eu$year)
+
+# export raw data containing only the essential columns
+write.csv(r.occs_eu, 'data/occs/raw/religiosa_europe_raw.csv')
+
+# thin occurrences with a thinning distance of 30 km
+
+
+# export thinned points
+
+
 ### projection (non-native) range for M. religiosa
-# filter occurrence points in North America
+# filter occurrences in North America
 r.occs_na <- r.occs %>% filter(continent == 'NORTH_AMERICA')
 head(r.occs_na)
 nrow(r.occs_na)
 
 points(r.occs_na[, c('long', 'lat')], col = 'blue')
 
+# check temporal coverage == do this prior to thinning because thinning will remove all columns other than the occurrences
+unique(r.occs_na$year)
+
+# export raw data containing only the essential columns
+write.csv(r.occs_na, 'data/occs/raw/religiosa_northamerica_raw.csv')
+
+
 ### calibration (native) range for I. oratoria 
+# plot out the occurrence points on the map first
+plot(envs[[1]])
+points(o.occs[, c('long', 'lat')])
+
+# filter occurrences recorded in Europe
+o.occs_eu <- o.occs %>% filter(continent == 'EUROPE')
+head(o.occs_eu)
+nrow(o.occs_eu)
+
+points(o.occs_eu[, c('long', 'lat')], col = 'red')
+
+# check temporal coverage == do this prior to thinning because thinning will remove all columns other than the occurrences
+unique(o.occs_eu$year)
 
 
 ### projection (non-native) range for I. oratoria
+# filter occurrences in North America
+o.occs_na <- o.occs %>% filter(continent == 'NORTH_AMERICA')
+head(o.occs_na)
+nrow(o.occs_na)
+
+points(o.occs_na[, c('long', 'lat')], col = 'blue')
+
+
+# check temporal coverage == do this prior to thinning because thinning will remove all columns other than the occurrences
+unique(o.occs_na$year)
