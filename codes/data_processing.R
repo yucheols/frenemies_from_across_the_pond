@@ -7,7 +7,7 @@ gc()
 
 # load packages
 library(megaSDM)
-library(spThin)
+library(SDMtune)
 library(raster) 
 library(terra)
 library(plyr)
@@ -68,9 +68,15 @@ unique(r.occs_eu$year)
 write.csv(r.occs_eu, 'data/occs/raw/religiosa_europe_raw.csv')
 
 # thin occurrences with a thinning distance of 30 km
+# first need to resample the base raster from 5km res to 30km. This is 5 * n =30. So the aggregation factor (n) of 6 is needed.
+res_30 <- terra::aggregate(envs[[1]], fact = 6)
 
+# thin occurrence
+r.occs_eu_thin <- thinData(coords = r.occs_eu, env = res_30, x = 'long', y = 'lat', verbose = T, progress = T)
+nrow(r.occs_eu_thin)
 
 # export thinned points
+write.csv(r.occs_eu_thin, 'data/occs/thinned/religiosa_europe_thinned_30km.csv')
 
 
 ### projection (non-native) range for M. religiosa
