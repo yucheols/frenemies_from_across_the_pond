@@ -48,15 +48,20 @@ r_dec_keep_sf <- st_as_sf(r_dec_keep, coords = c('long', 'lat'), crs = 4326)
 
 ##### visualize these ranges
 # mask the map to the area of interest
-elev <- crop(elev, extent(r_dec_keep_sf))
+elev <- crop(elev, ext(r_dec_keep_sf))
 plot(elev)
 
-# plot
+# plot == W 2000 & H 400
 ggplot() +
   geom_spatraster(data = elev) +
-  geom_sf(data = r_dec_keep_sf, color = '#6495ED') +
+  geom_sf(data = r_dec_keep_sf, shape = 21, fill = '#6495ED', stroke = 1) +
   facet_grid(~ decade) +
   scale_fill_wiki_c(na.value = NA) +
   labs(fill = 'Elevation (m)') +
-  theme_bw()
+  coord_sf(expand = F) +
+  theme_bw() +
+  theme(strip.text = element_text(size = 14, face = 'bold'),
+        legend.title = element_text(size = 14, face = 'bold'),
+        legend.text = element_text(size = 12),
+        axis.text = element_text(size = 12))
  
