@@ -43,6 +43,14 @@ for (i in 1:length(r_dec_list)) {
 r_dec_keep <- bind_rows(r_dec_list[10:14]) %>% as.data.frame()
 head(r_dec_keep)
 
+# recode the decade names for better visualization
+r_dec_keep$decade <- as.character(r_dec_keep$decade)
+r_dec_keep$decade <- r_dec_keep$decade %>% recode_factor('1980' = '1980s',
+                                                         '1990' = '1990s',
+                                                         '2000' = '2000s',
+                                                         '2010' = '2010s',
+                                                         '2020' = '2020s')
+
 # convert to sf object
 r_dec_keep_sf <- st_as_sf(r_dec_keep, coords = c('long', 'lat'), crs = 4326)
 
