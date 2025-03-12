@@ -37,7 +37,7 @@ print(r_dec_eu_list)
 
 # check the number of rows per decadal interval == only the last 5 intervals have a sufficient number of occurrence points
 for (i in 1:length(r_dec_eu_list)) {
-  print(nrow(r_dec_list[[i]]))
+  print(nrow(r_dec_eu_list[[i]]))
 }
 
 # bind the last 5 intervals
@@ -73,7 +73,8 @@ r_eu_range <- ggplot() +
         strip.text = element_text(size = 14, face = 'bold'),
         legend.title = element_text(size = 14, face = 'bold'),
         legend.text = element_text(size = 12),
-        axis.text = element_text(size = 12))
+        axis.text = element_text(size = 12),
+        axis.text.x = element_text(angle = 25, hjust = 1))
 
 
 ##### load raw North American occurrence points with the year column
@@ -127,10 +128,12 @@ r_na_range <- ggplot() +
         strip.text = element_text(size = 14, face = 'bold'),
         legend.title = element_text(size = 14, face = 'bold'),
         legend.text = element_text(size = 12),
-        axis.text = element_text(size = 12))
+        axis.text = element_text(size = 12),
+        axis.text.x = element_text(angle = 25, hjust = 1))
 
 
 #### combine == W2000 H700
 ggarrange(r_eu_range, r_na_range, ncol = 1, nrow = 2)
 
+# consider saving with ggsave for publication
 
