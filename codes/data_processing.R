@@ -7,6 +7,7 @@ gc()
 
 # load packages
 library(megaSDM)
+library(ENMwrap)
 library(SDMtune)
 library(raster) 
 library(terra)
@@ -80,12 +81,17 @@ nrow(r.occs_eu_thin)
 write.csv(r.occs_eu_thin, 'data/occs/thinned/religiosa_europe_thinned_30km.csv')
 
 # generate calibration area for M. religiosa
-# transform thinned coordinates to sf object to get an extent of the study area
-r.eu_thin_sf <- st_as_sf(r.occs_eu_thin, coords = c('long', 'lat'), crs = 4326)
+# draw a 300km buffer around the thinned occurrence points
+r.eu_thin_buff <- buff_maker(occs_list = list(r.occs_eu_thin), envs = raster(envs[[1]]), buff_dist = 300000)
 
 # define calibration area
-r.calib <- crop(envs, ext(r.eu_thin_sf))
+r.calib <- crop(envs, ext(r.eu_thin_buff[[1]]))
+r.calib <- mask(r.calib, r.eu_thin_buff[[1]])
 plot(r.calib[[1]])
+
+plot(envs[[1]])
+points(r.occs_eu_thin[, c('long', 'lat')], col = 'red')
+plot(r.eu_thin_buff[[1]], add = T, lwd = 2)
 
 # export calibration extent layers
 for (i in 1:nlyr(r.calib)) {
@@ -116,12 +122,14 @@ write.csv(r.occs_na_thin, 'data/occs/thinned/religiosa_northamerica_thinned_30km
 
 
 # generate projection area for M. religiosa
-# transform thinned coordinates to sf object to get an extent of the study area
-r.na_thin_sf <- st_as_sf(r.occs_na_thin, coords = c('long', 'lat'), crs = 4326)
+# based on the range map, extend ymax by 10 deg, ymin by -10 deg, and xmin by -10 deg
+ext_occ <- ext(st_as_sf(r.occs_na_thin, coords = c('long', 'lat'), crs = 4326))
 
 # define projection area
-r.proj <- crop(envs, ext(r.na_thin_sf))
+r.proj <- crop(envs, c(xmin(ext_occ) - 10, xmax(ext_occ), ymin(ext_occ) - 10, ymax(ext_occ) + 10))
 plot(r.proj[[1]])
+
+points(r.occs_na_thin[, c('long', 'lat')], col = 'blue')
 
 # export projction layers
 for (i in 1:nlyr(r.proj)) {
@@ -129,7 +137,7 @@ for (i in 1:nlyr(r.proj)) {
 }
 
 
-### calibration (native) range for I. oratoria 
+### calibration (native) range for I. oratoria
 # plot out the occurrence points on the map first
 plot(envs[[1]])
 points(o.occs[, c('long', 'lat')])
@@ -147,6 +155,32 @@ unique(o.occs_eu$year)
 # export raw data containing only the essential columns
 write.csv(o.occs_eu, 'data/occs/raw/oratoria_europe_raw.csv')
 
+# thin occurrences with a thinning distance of 15 km
+# first need to resample the base raster from 5km res to 15km. This is 5*n = 15. So the aggregation factor (n) of 3 is needed
+res_15 <- terra::aggregate(envs[[1]], fact = 3)
+
+# thin occurrence
+o.occs_eu_thin <- thinData(coords = o.occs_eu, env = res_15, x = 'long', y = 'lat', verbose = T, progress = T)
+nrow(o.occs_eu_thin)
+
+# export thinned points
+write.csv(o.occs_eu_thin, 'data/occs/thinned/oratoria_europe_thinned_15km.csv')
+
+# generate calibration area for I. oratoria
+# draw a 300km buffer around the thinned occurrence points
+o.eu_thin_buff <- buff_maker(occs_list = list(o.occs_eu_thin), envs = raster(envs[[1]]), buff_dist = 300000)
+
+# define calibration area
+o.calib <- crop(envs, ext(o.eu_thin_buff[[1]]))
+o.calib <- mask(o.calib, o.eu_thin_buff[[1]])
+plot(o.calib[[1]])
+
+# export calibration extent layers
+for (i in 1:nlyr(o.calib)) {
+  writeRaster(o.calib[[i]], paste0('data/envs/oratoria/calib/', names(o.calib)[i], '.tif'), overwrite = T)
+}
+
+
 ### projection (non-native) range for I. oratoria
 # filter occurrences in North America
 o.occs_na <- o.occs %>% filter(continent == 'NORTH_AMERICA')
@@ -160,3 +194,19 @@ unique(o.occs_na$year)
 
 # export raw data containing only the essential columns
 write.csv(o.occs_na, 'data/occs/raw/oratoria_northamerica_raw.csv')
+
+# thin the non-native range data using the 15km thinning parameter
+o.occs_na_thin <- thinData(coords = o.occs_na, env = res_15, x = 'long', y = 'lat', verbose = T, progress = T)
+nrow(o.occs_na_thin)
+
+# export thinned points
+write.csv(o.occs_na_thin, 'data/occs/thinned/oratoria_northamerica_thinned_15km.csv')
+
+# use same projection extent as M.religiosa
+o.proj <- crop(envs, ext(r.proj))
+plot(o.proj[[1]])
+
+# export projection layers
+for (i in 1:nlyr(o.proj)) {
+  writeRaster(o.proj[[i]], paste0('data/envs/oratoria/proj/', names(o.proj)[i], '.tif'), overwrite = T)
+}
